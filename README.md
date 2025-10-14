@@ -179,8 +179,16 @@ server {
 Get free certs via Let's Encrypt:
 
 ```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d example.com
+openssl req -x509 -nodes -days 365 \
+  -newkey rsa:2048 \
+  -keyout localhost.key \
+  -out localhost.crt \
+  -subj "/CN=localhost"
+
+sudo mkdir -p /etc/nginx/ssl
+sudo cp localhost.crt /etc/nginx/ssl/
+sudo cp localhost.key /etc/nginx/ssl/
+
 ```
 
 ---
