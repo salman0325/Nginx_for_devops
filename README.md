@@ -189,6 +189,8 @@ sudo mkdir -p /etc/nginx/ssl
 sudo cp localhost.crt /etc/nginx/ssl/
 sudo cp localhost.key /etc/nginx/ssl/
 
+sudo chmod 600 /etc/nginx/ssl/localhost.*
+
 ```
 
 ---
