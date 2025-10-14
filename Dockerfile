@@ -1,7 +1,10 @@
-FROM nginx:alpine
+FROM nginx:latest
 
 WORKDIR /app
 
 COPY . /usr/share/nginx/html
-EXPOSE 80
-CMD [ "nginx". "-g", "daemon off;"]
+
+EXPOSE 7000
+
+CMD ["nginx", "-g", "daemon off;"]
+
