@@ -1,7 +1,7 @@
 
 ---
 
-## ✅ FINAL `README.md` (Just copy-paste into your repo)
+## ✅ FINAL NGINX `README.md`
 
 ````markdown
 # 🚀 NGINX DevOps Project
