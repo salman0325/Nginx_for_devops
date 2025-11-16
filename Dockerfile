@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . /usr/share/nginx/html
 
-EXPOSE 7000
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
 
