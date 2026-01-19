@@ -40,13 +40,13 @@ sudo apt install nginx -y
 
 ## 📁 3. About `/etc/nginx/`
 
-| Path                          | Description                     |
-| ----------------------------- | ------------------------------- |
-| `/etc/nginx/nginx.conf`       | Main config file                |
-| `/etc/nginx/sites-available/` | Site-specific configs           |
-| `/etc/nginx/sites-enabled/`   | Enabled site configs (symlinks) |
-| `/etc/nginx/conf.d/`          | Additional config snippets      |
-| `/var/log/nginx/`             | NGINX logs                      |
+| Path                          | Description                               |
+| ----------------------------- | ----------------------------------------- |
+| `/etc/nginx/nginx.conf`       | Main config file for nginx                |
+| `/etc/nginx/sites-available/` | contains configu files for each website or virtual host|
+| `/etc/nginx/sites-enabled/`   |contain symbolic link to enabled files in sites-avalible|
+| `/etc/nginx/conf.d/`          |store additional config file |              |
+| `/var/log/nginx/`             | contain the log suches access.log and error.log|
 
 ---
 
