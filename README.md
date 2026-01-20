@@ -599,6 +599,268 @@ location / {
 
 ```
 
+# Bruste-force attak
+    is a backing method where someone tries to guess passwords or secret keys by trying all possible combination untill the correct one is fond 
+```nginx
+http {
+
+    # ================================
+    # RATE LIMIT ZONE (MOST IMPORTANT)
+    # ================================
+
+    # Har client IP ko identify karne ke liye variable
+    # $binary_remote_addr = client ka IP (binary form, fast & memory efficient)
+    limit_req_zone $binary_remote_addr zone=req_limit:10m rate=5r/m;
+    # 10m = memory size
+    # 5r/m = har IP sirf 5 requests per minute kar sakta hai
+    # Iska matlab brute-force password guessing ruk jati hai
+
+
+    # ================================
+    # CONNECTION LIMIT ZONE
+    # ================================
+
+    # Ek IP ek time par kitni connections bana sakta hai
+    limit_conn_zone $binary_remote_addr zone=conn_limit:10m;
+    # Ye flooding attacks ko rokta hai
+
+
+    # ================================
+    # SERVER BLOCK
+    # ================================
+    server {
+
+        listen 80;  # HTTP port
+        server_name example.com;  # Apna domain yahan likho
+
+
+        # ================================
+        # LOGIN PAGE PROTECTION
+        # ================================
+        location /login {
+
+            # Rate limit apply ho rahi hai
+            limit_req zone=req_limit burst=10 nodelay;
+            # burst=10 = thori si extra requests allow
+            # nodelay = attacker ko wait nahi karne deta, seedha block
+
+            # Connection limit
+            limit_conn conn_limit 5;
+            # Ek IP sirf 5 connections bana sakta hai
+
+            proxy_pass http://backend;
+            # Request backend app ko forward hoti hai
+        }
+
+
+        # ================================
+        # API PROTECTION
+        # ================================
+        location /api {
+
+            limit_req zone=req_limit burst=20;
+            # API ke liye thori zyada limit rakhi hai
+
+            limit_conn conn_limit 10;
+            # API ke liye max 10 connections per IP
+
+            proxy_pass http://backend;
+        }
+
+
+        # ================================
+        # GLOBAL PROTECTION (OPTIONAL)
+        # ================================
+        location / {
+
+            limit_conn conn_limit 20;
+            # Poori site ke liye connection limit
+
+            try_files $uri $uri/ =404;
+            # Static files serve karne ke liye
+        }
+    }
+}
+```nginx
+sudo apt update
+sudo apt install apache2-utils -y
+
+sudo htpasswd -c /etc/nginx/.htpasswd salman
+
+sudo htpasswd /etc/nginx/.htpasswd ali
+```
+```nginx
+server {
+    listen 443 ssl;
+    server_name example.com;
+
+    ssl_certificate /etc/ssl/certs/example.crt;
+    ssl_certificate_key /etc/ssl/private/example.key;
+
+    location /admin {
+
+        # Basic authentication enable
+        auth_basic "Restricted Area";
+        # User ko jo message dikhega
+
+        auth_basic_user_file /etc/nginx/.htpasswd;
+        # Password file ka path
+
+        proxy_pass http://backend;
+        # Request backend ko forward
+    }
+}
+
+```
+#complete nginx file
+```nginx
+# ================================
+# HTTP BLOCK (GLOBAL SETTINGS)
+# ================================
+http {
+
+    # ----------------
+    # MIME types
+    # ----------------
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    # ----------------
+    # Logging
+    # ----------------
+    access_log /var/log/nginx/access.log;
+    error_log  /var/log/nginx/error.log;
+
+    # ----------------
+    # Performance
+    # ----------------
+    sendfile on;
+    keepalive_timeout 65;
+
+    # ================================
+    # BRUTE‑FORCE PROTECTION (RATE LIMIT)
+    # ================================
+    limit_req_zone $binary_remote_addr zone=req_limit:10m rate=10r/m;
+    # Har IP sirf 10 requests per minute kar sakta hai
+
+    limit_conn_zone $binary_remote_addr zone=conn_limit:10m;
+    # Har IP ki connections limit define ho rahi hai
+
+
+    # ================================
+    # UPSTREAM (BACKEND SERVER)
+    # ================================
+    upstream backend_app {
+        server 192.168.1.100:8080 weight=10;
+        # Backend application server
+    }
+
+
+    # ================================
+    # HTTP SERVER (REDIRECT TO HTTPS)
+    # ================================
+    server {
+        listen 80;
+        server_name example.com www.example.com;
+
+        # HTTP se HTTPS redirect
+        return 301 https://$host$request_uri;
+    }
+
+
+    # ================================
+    # HTTPS SERVER (MAIN PRODUCTION)
+    # ================================
+    server {
+
+        listen 443 ssl http2;
+        server_name example.com www.example.com;
+
+        # ----------------
+        # SSL CONFIG
+        # ----------------
+        ssl_certificate     /etc/ssl/certs/example.crt;
+        ssl_certificate_key /etc/ssl/private/example.key;
+
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+
+        # ----------------
+        # SECURITY HEADERS
+        # ----------------
+        add_header X-Frame-Options "DENY";
+        add_header X-Content-Type-Options "nosniff";
+        add_header X-XSS-Protection "1; mode=block";
+
+        # ----------------
+        # ROOT WEBSITE
+        # ----------------
+        root /var/www/html;
+        index index.html index.htm;
+
+
+        # ================================
+        # ADMIN AREA (2 ALLOW, 1 DENY)
+        # ================================
+        location /admin {
+
+            # Allowed servers
+            allow 192.168.1.10;
+            allow 192.168.1.20;
+
+            # Denied server
+            deny 192.168.1.30;
+
+            # Baqi sab block
+            deny all;
+
+            # Basic authentication
+            auth_basic "Admin Access";
+            auth_basic_user_file /etc/nginx/.htpasswd;
+
+            # Brute‑force protection
+            limit_req zone=req_limit burst=5;
+            limit_conn conn_limit 3;
+
+            proxy_pass http://backend_app;
+        }
+
+
+        # ================================
+        # API (PUBLIC BUT PROTECTED)
+        # ================================
+        location /api {
+
+            limit_req zone=req_limit burst=20;
+            # API ke liye thori zyada requests allow
+
+            limit_conn conn_limit 10;
+            # Connection limit
+
+            proxy_pass http://backend_app;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+
+        # ================================
+        # PUBLIC WEBSITE
+        # ================================
+        location / {
+
+            allow all;
+            # Sab users allow
+
+            try_files $uri $uri/ =404;
+            # Static files serve
+        }
+    }
+}
+```
+
 ## 🙏 Thanks for Visiting This Repo
 
 Feel free to contribute or suggest improvements.
