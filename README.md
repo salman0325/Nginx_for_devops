@@ -541,10 +541,63 @@ docker compose run --rm certbot certonly \
 ```
 docker-compose up
 
+```nginx
+upstream salman-service {
+    server 192.168.18.182:8082;
+    
+}
+
+# HTTP SERVER (80)
+server {
+    listen 80;  # HTTP port
+    server_name example.com www.example.com;  # Domain name
+
+    # HTTP se HTTPS redirect
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS SERVER (443)
+server {
+    listen 443 ssl;  # HTTPS port
+    server_name example.com www.example.com;
+
+    # SSL certificate path
+    ssl_certificate     /etc/ssl/certs/example.local.crt;
+
+    ssl_certificate_key /etc/ssl/private/example.local.key ;
+
+    # Recommended SSL settings
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Website root directory
+    root /var/www/html;
+    
+
+    # Default index files
+    index index.html index.htm;
+
+    # Main location
+    location / {
+        proxy_pass http://salman-service;
+        try_files $uri $uri/ =404;
+    }
+}
+```
 
 Prevents abuse and DoS.
 
 ---
+How to allow a port
+ufw allow from 192.245.455. proto tcp to any port 80
+```nginx
+upstream apache-example {
+    server 192.234.455:80 weight= 10;
+    server 192.234.443:80 weight=1;
+location / {
+    proxy_pass http:// apache_example;
+
+```
 
 ## 🙏 Thanks for Visiting This Repo
 
