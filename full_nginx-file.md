@@ -1,20 +1,25 @@
 # ✅ Load balancer backend servers
+```nginx
 upstream app_servers {
     server 10.0.1.10:7000;
     server 10.0.1.11:7000;
     # Optional: sticky sessions
     # ip_hash;
 }
+```
 
 # ✅ HTTP -> HTTPS redirect
+```nginx
 server {
     listen 80;
     server_name example.com www.example.com;
 
     return 301 https://$host$request_uri;
 }
+```
 
 # ✅ HTTPS Reverse Proxy with Caching for Static Assets
+```nginx
 server {
     listen 443 ssl;
     server_name example.com www.example.com;
@@ -50,3 +55,4 @@ server {
         # proxy_cache_valid 200 1m;
     }
 }
+```
