@@ -247,6 +247,55 @@ server {
     }
 }
 ```
+```nginx
+# Redirect all HTTP to HTTPS
+server {
+    listen 80;
+    server_name example.local;  # replace with your domain or leave as is
+
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS server
+server {
+    listen 443 ssl;
+    server_name example.local;
+
+    ssl_certificate     /etc/ssl/certs/example.local.crt;
+    ssl_certificate_key /etc/ssl/private/example.local.key;
+
+    # Default proxy for /
+    location / {
+        proxy_pass http://192.168.18.182:8083/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Proxy /green/ to backend 8082
+    location /green/ {
+        proxy_pass http://192.168.18.182:8082/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Proxy /blue/ to backend 8083
+    location /blue/ {
+        proxy_pass http://192.168.18.182:8081/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Optional: Handle errors gracefully
+    error_page 404 /404.html;
+    location = /404.html {
+        root /var/www/html;  # make sure 404.html exists here
+        internal;
+    }
+}
+```
 
 ```nginx
 # Nginx ko batata hai ke worker process kis user ke under chale
