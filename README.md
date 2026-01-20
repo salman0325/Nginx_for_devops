@@ -248,6 +248,300 @@ server {
 }
 ```
 
+```nginx
+# Nginx ko batata hai ke worker process kis user ke under chale
+user www-data;
+
+# Worker processes ki tadaad (auto = CPU cores ke mutabiq)
+worker_processes auto;
+
+# Error log ka path aur level
+error_log /var/log/nginx/error.log warn;
+
+# Process ID file ka location
+pid /run/nginx.pid;
+
+events {
+    # Ek worker kitne connections handle kar sakta hai
+    worker_connections 1024;
+}
+
+http {
+
+    # MIME types file include kar raha hai (file types identify karne ke liye)
+    include /etc/nginx/mime.types;
+
+    # Default file type
+    default_type application/octet-stream;
+
+    # Access log ka format
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    # Access log ka path
+    access_log /var/log/nginx/access.log main;
+
+    # Sendfile enable karta hai (fast file serving)
+    sendfile on;
+
+    # TCP optimization
+    tcp_nopush on;
+    tcp_nodelay on;
+
+    # Client connection timeout
+    keepalive_timeout 65;
+
+    # Gzip compression enable (performance ke liye)
+    gzip on;
+    gzip_disable "msie6";
+
+    # Gzip kin file types par apply ho
+    gzip_types
+        text/plain
+        text/css
+        application/json
+        application/javascript
+        text/xml
+        application/xml
+        application/xml+rss
+        text/javascript;
+
+    # ==============================
+    # SERVER BLOCK (DOMAIN CONFIG)
+    # ==============================
+    server {
+
+        # Port 80 par listen kare (HTTP)
+        listen 80;
+
+        # Domain name (apna domain yahan likho)
+        server_name example.com www.example.com;
+
+        # HTTP ko HTTPS par redirect karne ke liye
+        return 301 https://$host$request_uri;
+    }
+
+    # ==============================
+    # HTTPS SERVER BLOCK
+    # ==============================
+    server {
+
+        # HTTPS port
+        listen 443 ssl http2;
+
+        # Domain name
+        server_name example.com www.example.com;
+
+        # SSL certificate ka path
+        ssl_certificate /etc/ssl/certs/example.crt;
+
+        # SSL private key ka path
+        ssl_certificate_key /etc/ssl/private/example.key;
+
+        # Strong SSL protocols
+        ssl_protocols TLSv1.2 TLSv1.3;
+
+        # Secure ciphers
+        ssl_ciphers HIGH:!aNULL:!MD5;
+
+        # Root directory (agar static files hain)
+        root /var/www/html;
+
+        # Default index file
+        index index.html index.htm;
+
+        # ==============================
+        # FRONTEND (React / Static Files)
+        # ==============================
+        location / {
+
+            # React SPA ke liye fallback
+            try_files $uri $uri/ /index.html;
+        }
+
+        # ==============================
+        # BACKEND API (Node.js)
+        # ==============================
+        location /api/ {
+
+            # Backend server ka address (Node.js port)
+            proxy_pass http://localhost:3000;
+
+            # HTTP version set kar raha hai
+            proxy_http_version 1.1;
+
+            # WebSocket support ke liye headers
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+
+            # Original host backend ko bhej raha hai
+            proxy_set_header Host $host;
+
+            # Client ka IP backend ko bhejne ke liye
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # Proxy cache bypass
+            proxy_cache_bypass $http_upgrade;
+        }
+
+        # ==============================
+        # SECURITY HEADERS
+        # ==============================
+        add_header X-Frame-Options "DENY";
+        add_header X-XSS-Protection "1; mode=block";
+        add_header X-Content-Type-Options "nosniff";
+        add_header Referrer-Policy "no-referrer-when-downgrade";
+
+        # ==============================
+        # LOG FILES
+        # ==============================
+        access_log /var/log/nginx/example_access.log;
+        error_log /var/log/nginx/example_error.log;
+    }
+}
+```
+docker-compose.yml (Nginx + Certbot)
+```nginx
+project/
+│── docker-compose.yml
+│── nginx/
+│   └── default.conf
+│── certbot/
+│   └── www/
+│   └── conf/
+```
+```
+version: '3.8'  # Docker compose version
+
+services:
+
+  nginx:
+    image: nginx:latest  # Official nginx image
+    container_name: nginx  # Container ka naam
+    restart: always  # Container crash ho to auto restart
+    ports:
+      - "80:80"    # HTTP port
+      - "443:443"  # HTTPS port
+    volumes:
+      # Nginx config mount kar rahe hain
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+      # SSL certificates ke liye volume
+      - ./certbot/conf:/etc/letsencrypt
+
+      # Certbot challenge files ke liye
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - certbot
+
+  certbot:
+    image: certbot/certbot  # Official certbot image
+    container_name: certbot
+    volumes:
+      # SSL certificates store karne ke liye
+      - ./certbot/conf:/etc/letsencrypt
+
+      # Challenge files ke liye
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "
+      trap exit TERM;
+      while :; do
+        certbot renew;
+        sleep 12h;
+      done"
+    # Har 12 ghante baad SSL renew check karega
+```
+nginx/default.conf (Auto SSL + Reverse Proxy)
+```nginx
+# HTTP server (SSL ke liye challenge handle karega)
+server {
+
+    listen 80;  # Port 80 par listen
+    server_name example.com www.example.com;  # Apna domain yahan likho
+
+    # Certbot challenge ke liye location
+    location /.well-known/acme-challenge/ {
+
+        # Certbot ki files ka path
+        root /var/www/certbot;
+    }
+
+    # Baqi sari traffic HTTPS par redirect
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS server block
+server {
+
+    listen 443 ssl http2;  # HTTPS + HTTP2 enable
+    server_name example.com www.example.com;
+
+    # SSL certificate ka path
+    ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
+
+    # SSL private key
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    # Strong SSL protocols
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    # Secure ciphers
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # =============================
+    # FRONTEND / STATIC FILES
+    # =============================
+    root /usr/share/nginx/html;  # Static files ka path
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # =============================
+    # BACKEND API (Node.js example)
+    # =============================
+    location /api/ {
+
+        # Backend container ya localhost ka port
+        proxy_pass http://host.docker.internal:3000;
+
+        # HTTP version
+        proxy_http_version 1.1;
+
+        # WebSocket support
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Original headers backend ko bhejna
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+First Time SSL Generate Karne Ka Command
+
+⚠️ Sirf pehli dafa run karna hota hai
+```ngixn
+docker compose run --rm certbot certonly \
+  --webroot \
+  --webroot-path=/var/www/certbot \
+  --email your@email.com \
+  --agree-tos \
+  --no-eff-email \
+  -d example.com -d www.example.com
+```
+docker-compose up
+
+
 Prevents abuse and DoS.
 
 ---
