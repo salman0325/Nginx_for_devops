@@ -7,8 +7,9 @@ Nginx is a **web server, reverse proxy, and load balancer** used for high-perfor
 
 ## 2. Why is Nginx faster than Apache?
 
-Because it uses an **event-driven architecture**, while Apache uses a **thread/process-based model**.
+👉 Nginx is faster because it uses one process to handle many users at the same time.
 
+👉 Apache is slower because it creates one thread or process for each user.
 ---
 
 ## 3. What is event-driven architecture?
