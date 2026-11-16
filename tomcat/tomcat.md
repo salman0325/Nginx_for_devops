@@ -1,3 +1,6 @@
+# Apache Tomcat + Apache Server + Java Maven Deployment 
+
+
 # Complete A to Z Guide: Apache Tomcat + Apache Server + Java Maven Project Deployment
 
 Let's understand Tomcat from zero and then deploy one complete Java-based Maven project on Tomcat using Linux commands.
@@ -19,6 +22,9 @@ The goal is that you should be able to:
 ---
 
 # PART 1: What is Apache?
+
+**Roman Urdu mein samjhein:** Apache HTTP Server ek web server hai jo HTTP requests receive karta hai aur HTML, CSS, JavaScript aur images serve karta hai. Apache Tomcat Java web applications chalane wala servlet container hai. Dono alag products hain. HTTP Server ke common ports 80 aur 443 hain, jabke Tomcat ka default port 8080 hai.
+
 
 There are two different technologies that people commonly call Apache.
 
@@ -81,6 +87,9 @@ text
 
 # PART 2: How Java + Maven + Tomcat Work Together
 
+**Roman Urdu mein samjhein:** Java se application develop hoti hai. Maven code compile karta hai, dependencies download karta hai, tests chalata hai aur WAR/JAR package banata hai. WAR file ko Tomcat par deploy karte hain, phir browser se application access hoti hai. Normal standalone JAR automatically Tomcat par deploy nahi hoti.
+
+
 Understand this flow:
 
 text
@@ -142,6 +151,9 @@ Tomcat can deploy this WAR file.
 **Important:** A regular Java JAR application is not automatically deployable on Tomcat. For this tutorial, we will create a Java web application packaged as a WAR.
 
 # PART 3: Install Java, Maven and Tomcat on Ubuntu
+
+**Roman Urdu mein samjhein:** Ubuntu par pehle package information update karein, phir Java JDK 17 aur Maven install karein. java -version, javac -version aur mvn -version se installation verify karein. JAVA_HOME empty ho to actual Java path verify karke configure karein. Neeche tamam original commands aur configuration same rakhi gayi hain.
+
 
 We will use:
 
@@ -270,6 +282,9 @@ Official Maven installation guide: [Apache Maven Installation](<https://maven.ap
 ---
 
 # PART 4: Download and Install Apache Tomcat
+
+**Roman Urdu mein samjhein:** Tomcat 11 ki official site se binary archive download karein, /opt mein extract karein aur directory ka naam apache-tomcat rakhein. bin mein start/stop scripts, conf mein configuration, logs mein logs, webapps mein applications aur lib mein libraries hoti hain.
+
 
 ## Step 1: Go to the opt directory
 
@@ -431,6 +446,9 @@ apache-tomcat/
 
 # PART 5: Start and Stop Tomcat
 
+**Roman Urdu mein samjhein:** Tomcat start karne ke liye startup.sh aur stop karne ke liye shutdown.sh use karein. ps se Java/Tomcat process aur ss se port 8080 listening check karein. Browser mein localhost:8080 ya server IP se access verify karein.
+
+
 ## Start Tomcat
 
 bash
@@ -523,6 +541,9 @@ Tomcat shuts down that process gracefully.
 
 # PART 6: Create Shortcuts for Tomcat
 
+**Roman Urdu mein samjhein:** Rozana aasani ke liye /usr/local/bin mein symbolic links bana kar starttomcat aur stoptomcat shortcuts create karein. ln -s ka matlab symbolic link banana hai. Commands aur verification neeche maujood hain.
+
+
 You mentioned these commands:
 
 bash
@@ -588,6 +609,9 @@ You have now created your own Tomcat commands\!
 ---
 
 # PART 7: Configure Tomcat Users
+
+**Roman Urdu mein samjhein:** Tomcat Manager application se deployment aur management hoti hai. tomcat-users.xml mein manager-gui role aur strong password wala user configure karein. Manager ko public internet par expose na karein; localhost ya trusted administrative network tak restricted rakhein.
+
 
 Tomcat provides a Manager application through which you can deploy and manage web applications.
 
@@ -686,6 +710,9 @@ Log in using your configured username and password.
 For production environments, use strong credentials, HTTPS and restricted administrative access.
 
 # PART 8: Create One Complete Java Maven Project
+
+**Roman Urdu mein samjhein:** Ab salman-app naam ka Java Maven web project banayein. pom.xml mein project configuration, WAR packaging aur servlet dependency hogi. HomeServlet.java HTTP request handle karega aur index.html homepage show karega. Original XML, Java aur HTML code bilkul same diya gaya hai.
+
 
 Now we will create a real Java web application.
 
@@ -941,6 +968,9 @@ Save the file.
 
 # PART 9: Build the Maven Project
 
+**Roman Urdu mein samjhein:** Project root mein mvn clean se purana target output remove hota hai aur mvn package se compile, dependency resolution, tests aur WAR packaging hoti hai. mvn clean package ek saath dono kaam karta hai. Final WAR target/salman-app.war mein milti hai.
+
+
 This is one of the most important sections.
 
 Go to the project root:
@@ -1082,6 +1112,9 @@ Java Source Code
 
 # PART 10: Deploy WAR File on Tomcat
 
+**Roman Urdu mein samjhein:** WAR deploy karne ke liye Tomcat stop karein, target se salman-app.war ko Tomcat webapps directory mein copy karein, phir Tomcat start karein. webapps mein extracted directory aur browser URL check karke deployment verify karein.
+
+
 Now we have:
 
 text
@@ -1188,6 +1221,9 @@ Congratulations\! You have deployed your first Java Maven project on Apache Tomc
 
 # PART 11: Most Important Tomcat Commands
 
+**Roman Urdu mein samjhein:** Yahan Tomcat aur Linux ki rozana istemal hone wali commands ka complete reference diya gaya hai. start/stop, process, ports, logs, permissions, file copy, move, delete aur tar commands ko practice karein. rm -rf * bohat dangerous hai: chalane se pehle pwd aur ls zaroor check karein.
+
+
 These are the commands you should practice regularly.
 
 | Command | Purpose |
@@ -1252,6 +1288,9 @@ ls
 before deleting anything.
 
 # PART 12: What Happens When You Make Changes After Deployment?
+
+**Roman Urdu mein samjhein:** Deployment ke baad code change ho to Tomcat dobara install nahi karna. Java code update karein, Maven se nayi WAR banayein, purani deployment ka backup lein aur controlled redeployment karein. Naya project ho to uski alag WAR isi Tomcat instance par deploy ki ja sakti hai.
+
 
 This is probably the most important thing to understand in real DevOps work.
 
@@ -1429,6 +1468,9 @@ http://localhost:8080/employee-management/
 
 # PART 13: Important Tomcat Configuration Files
 
+**Roman Urdu mein samjhein:** Tomcat ki important files: server.xml se connectors/ports/hosts, tomcat-users.xml se users/roles, context.xml se application resources aur sessions, aur web.xml se servlets/filters/listeners configure hote hain. Paths aur configuration examples neeche hain.
+
+
 You should know these four files.
 
 ## 1\. server.xml
@@ -1524,6 +1566,9 @@ Purpose:
 
 # PART 14: Tomcat Logs and Troubleshooting
 
+**Roman Urdu mein samjhein:** Application open na ho to pehle process aur listening port check karein, phir catalina.out logs dekhein. 404 URL/context issue, 500 Java error, 403 permission issue, port already in use, Java version mismatch aur missing dependencies investigate karein. Firewall access sirf trusted sources ke liye allow karein.
+
+
 In real DevOps jobs, you will frequently work with logs.
 
 Suppose your application is not opening.
@@ -1617,6 +1662,9 @@ If external access is required, configure the firewall to allow only trusted sou
 
 # PART 15: Understand the Complete DevOps Deployment Workflow
 
+**Roman Urdu mein samjhein:** Real DevOps workflow mein developer code Git par push karta hai, Jenkins pipeline Maven build chalati hai, WAR generate hoti hai aur Tomcat par deploy hoti hai. Linux hosting aur optional Nginx reverse proxy ka role bhi samjhein.
+
+
 Now imagine you work in a company as a Junior DevOps Engineer.
 
 Developers write Java code.
@@ -1699,6 +1747,9 @@ Jenkins can perform the build and deployment steps automatically.
 ---
 
 # PART 16: Your Complete Tomcat Practical Command Sheet
+
+**Roman Urdu mein samjhein:** Yeh practical command sheet hai: basic Linux commands, Java/Maven installation, Tomcat installation, shortcuts, service start/stop, log checking, build, deployment aur browser verification. Tamam commands original ki tarah rakhi gayi hain.
+
 
 Save these commands for practice.
 
@@ -1857,6 +1908,9 @@ http://localhost:8080/salman-app/
 
 # PART 17: What Should You Learn After Tomcat?
 
+**Roman Urdu mein samjhein:** Tomcat ke baad learning order: Linux, Java, Maven, Tomcat, Git, GitHub, Jenkins, SonarQube, Nexus, Docker, Kubernetes aur Nginx. Har technology ka role original table mein diya gaya hai.
+
+
 For a Java-based DevOps project, I recommend learning in this order:
 
 | Level | Technology | What you learn |
@@ -1883,6 +1937,9 @@ Official learning resources:
 ---
 
 # PART 18: Interview Questions You Should Know
+
+**Roman Urdu mein samjhein:** Interview ke liye Apache Tomcat, default port, WAR location, JAR/WAR difference, start/stop, webapps/conf, Maven, clean package, multiple apps aur redeployment ko samjhein. Aakhir mein diye gaye 16 practical tasks complete karke practice karein.
+
 
 **Q1. What is Apache Tomcat?**
 
